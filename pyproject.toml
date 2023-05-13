@@ -7,7 +7,7 @@ readme = "README.md"
 packages = [{include = "tv_ai_robot"}]
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = "^3.10"
 pyserial = "^3.5"
 
 [tool.poetry.group.dev.dependencies]
