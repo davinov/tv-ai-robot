@@ -8,3 +8,6 @@ chmod 644 /etc/systemd/user/robot.service
 
 systemctl daemon-reload
 systemctl restart systemd-udevd.service 
+
+cp ./utils/hacktv /usr/local/bin/hacktv
+chmod 755 /usr/local/bin/hacktv
