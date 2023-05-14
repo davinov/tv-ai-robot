@@ -101,11 +101,11 @@ while run:
         # Convert the received data to an integer
         analog_value = int(line or 0)
         
-        if count % 10 == 0:
-            count = 0
-            print(analog_value)
+        #if count % 10 == 0:
+        #    count = 0
+        #    print(analog_value)
         # Do something with the analog value
-        # print(f"Analog value: {analog_value}")
+        #print(f"Analog value: {analog_value}")
         on_value_change(analog_value)
     
     except Exception as e:

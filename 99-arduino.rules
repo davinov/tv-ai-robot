@@ -1,2 +1,1 @@
-SUBSYSTEM=="tty", ATTRS{idVendor}=="2341", ATTRS{idProduct}=="0043", MODE="0664", SYMLINK+="arduino", GROUP="plugdev", RUN +="/usr/bin/sudo -u david /usr/local/sbin/robot.sh"
-ACTION=="add", SUBSYSTEM=="tty", ATTRS{idVendor}=="2341", ATTRS{idProduct}=="0043", MODE="0664", SYMLINK+="arduino", GROUP="plugdev", TAG+="systemd", ENV{SYSTEMD_WANTS}+="robot.service"
+ACTION=="add", SUBSYSTEM=="tty", ATTRS{idVendor}=="2341", ATTRS{idProduct}=="0043", MODE="0664", SYMLINK+="arduino", GROUP="plugdev", TAG+="systemd", ENV{SYSTEMD_USER_WANTS}+="robot.service"

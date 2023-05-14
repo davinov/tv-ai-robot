@@ -3,7 +3,7 @@ Description=robot
 
 [Service]
 WorkingDirectory=/home/david/GitHub/tv-ai-robot
-ExecStart=/home/david/.local/bin/poetry run python src/main.py
+ExecStart=/etc/poetry/bin/poetry run python src/main.py
 
 [Install]
 WantedBy=multi-user.target
