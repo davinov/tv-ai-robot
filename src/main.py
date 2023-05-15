@@ -8,16 +8,19 @@ run = True
 PLAYLIST_VIDEOS = '/usr/share/robot-playlist'
 ARDUINO_SERIAl_PORT = '/dev/arduino'
 
-ON_RELAY_TV_VALUE = b'1'
-OFF_RELAY_TV_VALUE = b'0'
+SET_BLINK_TIME = 'set:blink_relay_counter:'
 
-ON_RELAY_LIGHTS_VALUE = b'3'
-OFF_RELAY_LIGHTS_VALUE = b'4'
-BLINK_RELAY_LIGHTS_VALUE = b'5'
+ON_RELAY_TV_VALUE = 'tv:on'
+OFF_RELAY_TV_VALUE = 'tv:off'
+
+ON_RELAY_LIGHTS_VALUE = 'lights:on'
+OFF_RELAY_LIGHTS_VALUE = 'lights:off'
+BLINK_RELAY_LIGHTS_VALUE = 'lights:blink'
 
 
 THRESHOLD_VALUE = 20
-GRACE_PERIOD_SECONDS = 2
+GRACE_PERIOD_SECONDS = 3
+BLINK_RELAY_COUNTER_VALUE = 600 # in ms
 SERIAL_RATE_MS = 100
 
 #h: HackTV = HackTV()
@@ -25,6 +28,15 @@ h: SingletonProcess = SingletonProcess()
 current_tv_state: bool = False
 grace_period_counter: int = 0
 current_lights_state: bool | Literal['blink'] = False
+
+
+def send_to_arduino(command: str):
+    ser.write((command + '\n').encode(encoding = 'ascii', errors = 'strict'))
+
+def setup():
+    print('Sending command')
+    send_to_arduino(f'{SET_BLINK_TIME}{int(BLINK_RELAY_COUNTER_VALUE / SERIAL_RATE_MS)}')
+
 
 def on_value_change(val: int):
     global grace_period_counter
@@ -74,7 +86,7 @@ def select_random_file(directory):
 def on_state_tv_change(tv_state: bool):
     if tv_state:
         print('Start TV')
-        ser.write(ON_RELAY_TV_VALUE)
+        send_to_arduino(ON_RELAY_TV_VALUE)
         #h.start("/home/david/Documents/Robot/10s.mp4")
         random_file = select_random_file(PLAYLIST_VIDEOS)
         print("start %s" % random_file)
@@ -83,8 +95,9 @@ def on_state_tv_change(tv_state: bool):
         h.start("/usr/local/bin/hacktv","-m", "l", "-f", "471250000", "-s", "16000000", "-g", "30", "-v", "--nonicam", "--nocolour", ff)
     else:
         print('Stop TV')
-        ser.write(OFF_RELAY_TV_VALUE)
-        h.start("/usr/local/bin/hacktv","-m", "l", "-f", "471250000", "-s", "16000000", "-g", "30", "-v", "--nonicam", "--nocolour", "test:colourbars")
+        send_to_arduino(OFF_RELAY_TV_VALUE)
+        h.stop()
+        # h.start("/usr/local/bin/hacktv","-m", "l", "-f", "471250000", "-s", "16000000", "-g", "30", "-v", "--nonicam", "--nocolour", "test:colourbars")
 
 
 
@@ -92,13 +105,13 @@ def on_state_lights_change(lights_state: bool | Literal['blink']):
     match lights_state:
         case True:
             print('Start lights')
-            ser.write(ON_RELAY_LIGHTS_VALUE)
+            send_to_arduino(ON_RELAY_LIGHTS_VALUE)
         case 'blink':
             print('Blink lights')
-            ser.write(BLINK_RELAY_LIGHTS_VALUE)
+            send_to_arduino(BLINK_RELAY_LIGHTS_VALUE)
         case False:
             print('Stop lights')
-            ser.write(OFF_RELAY_LIGHTS_VALUE)
+            send_to_arduino(OFF_RELAY_LIGHTS_VALUE)
 
 #h.start("hackrf_info")
 h.start("/usr/local/bin/hacktv","-m", "l", "-f", "471250000", "-s", "16000000", "-g", "30", "-v", "--nonicam", "--nocolour", "test:colourbars")
@@ -107,6 +120,10 @@ h.start("/usr/local/bin/hacktv","-m", "l", "-f", "471250000", "-s", "16000000", 
 ser = serial.Serial(ARDUINO_SERIAl_PORT, 9600)  # Replace  with the appropriate port for your system
 time.sleep(2)  # Wait for the serial connection to initialize
 
+print("Setup start")
+setup()
+print("Setup done")
+
 count: int = 0
 
 while run:
@@ -114,17 +131,21 @@ while run:
         count += 1
 
         # Read a line from the serial port
-        line = ser.readline().decode('utf-8').strip()
-        
+        line = ser.readline().decode(encoding='ascii', errors='strict').strip()
+                
         # Convert the received data to an integer
-        analog_value = int(line or 0)
-        
+        if line.startswith('A0:'):
+            analog_value = int(line[3:] or 0)
+            # Do something with the analog value
+            #print(f"Analog value: {analog_value}")
+            on_value_change(analog_value)
+        else:
+            print('Debug: ', line)
+
         #if count % 10 == 0:
         #    count = 0
         #    print(analog_value)
-        # Do something with the analog value
-        #print(f"Analog value: {analog_value}")
-        on_value_change(analog_value)
+        
     
     except Exception as e:
         print(f"Error: {e}")
