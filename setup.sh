@@ -11,3 +11,8 @@ systemctl restart systemd-udevd.service
 
 cp ./utils/hacktv /usr/local/bin/hacktv
 chmod 755 /usr/local/bin/hacktv
+
+mkdir /usr/share/robot-playlist
+chmod 777 /usr/share/robot-playlist
+
+pip install yt-dlp

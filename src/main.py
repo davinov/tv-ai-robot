@@ -5,7 +5,7 @@ from singletonprocess import SingletonProcess
 #from pyhacktv import HackTV
 
 run = True
-
+PLAYLIST_VIDEOS = '/usr/share/robot-playlist'
 ARDUINO_SERIAl_PORT = '/dev/arduino'
 
 ON_RELAY_TV_VALUE = b'1'
@@ -56,13 +56,31 @@ def on_value_change(val: int):
     if previous_lights_state != current_lights_state:
         on_state_lights_change(current_lights_state)
 
+import os
+import random
+
+def select_random_file(directory):
+    # Obtient une liste de tous les fichiers dans le répertoire
+    files = [f for f in os.listdir(directory) if os.path.isfile(os.path.join(directory, f))]
+    
+    # Sélectionne un fichier au hasard
+    selected_file = random.choice(files)
+    
+    # Retourne le chemin complet du fichier sélectionné
+    return os.path.join(directory, selected_file)
+
+
 
 def on_state_tv_change(tv_state: bool):
     if tv_state:
         print('Start TV')
         ser.write(ON_RELAY_TV_VALUE)
         #h.start("/home/david/Documents/Robot/10s.mp4")
-        h.start("/usr/local/bin/hacktv","-m", "l", "-f", "471250000", "-s", "16000000", "-g", "30", "-v", "--nonicam", "--nocolour", "/home/david/Documents/Robot/10s.mp4")
+        random_file = select_random_file(PLAYLIST_VIDEOS)
+        print("start %s" % random_file)
+        #h.start("/usr/local/bin/hacktv","-m", "l", "-f", "471250000", "-s", "16000000", "-g", "30", "-v", "--nonicam", "--nocolour", random_file)
+        ff = 'ffmpeg:%s' % random_file
+        h.start("/usr/local/bin/hacktv","-m", "l", "-f", "471250000", "-s", "16000000", "-g", "30", "-v", "--nonicam", "--nocolour", ff)
     else:
         print('Stop TV')
         ser.write(OFF_RELAY_TV_VALUE)

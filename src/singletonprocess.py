@@ -13,12 +13,11 @@ class SingletonProcess:
 
     def start(self, command, *args):
         if self.process is not None:
+            print("Process is already running")
             self.stop()
         with self.lock:
-            if self.process is not None:
-                print("Process is already running")
-                self.stop()
-            self.process = subprocess.Popen([command] + list(args), stdout=subprocess.PIPE, stderr=subprocess.PIPE, preexec_fn=os.setsid)
+            self.return_code = None
+            self.process = subprocess.Popen([command] + list(args), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             self.monitor_thread = threading.Thread(target=self.monitor_process)
             self.monitor_thread.start()
     def stop(self):
@@ -27,12 +26,13 @@ class SingletonProcess:
                 print("No process is running")
                 return
             try:
-                os.killpg(os.getpgid(self.process.pid), signal.SIGTERM)  # Send the signal to all the process group
+                self.process.terminate()
                 self.monitor_thread.join()  # Wait for monitor_thread to finish
-                return_code = self.process.returncode
-                print(return_code)
-            except:
+                
+                print(self.return_code)
+            except Exception as e:
                 print('Oh :(')
+                print(str(e))
             finally:
                 self.process = None
 
@@ -40,9 +40,11 @@ class SingletonProcess:
         stdout, stderr = self.process.communicate()
         print("STDOUT:\n", stdout.decode())
         print("STDERR:\n", stderr.decode())
-        print("Process finished")
+        #print("Process finished with code %s" % return_code)
+        self.return_code = self.process.returncode
         self.process = None
-
+        #if return_code != 0:
+        #    raise Exception('Process failed with code %s' % return_code)
 
 if __name__ == "__main__":
     # Usage
